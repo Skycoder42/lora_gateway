@@ -131,8 +131,11 @@ static void gps_process_coords(void) {
 /* -------------------------------------------------------------------------- */
 /* --- MAIN FUNCTION -------------------------------------------------------- */
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 3)
+        return 1;
+
     struct sigaction sigact; /* SIGQUIT&SIGINT&SIGTERM signal handling */
 
     int i;
@@ -162,7 +165,7 @@ int main()
     printf("*** Library version information ***\n%s\n***\n", lgw_version_info());
 
     /* Open and configure GPS */
-    i = lgw_gps_enable("/dev/ttyAMA0", "ubx7", 0, &gps_tty_dev);
+	i = lgw_gps_enable(argv[1], argv[2], 0, &gps_tty_dev);
     if (i != LGW_GPS_SUCCESS) {
         printf("ERROR: IMPOSSIBLE TO ENABLE GPS\n");
         exit(EXIT_FAILURE);
