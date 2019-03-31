@@ -411,7 +411,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
     /* display received serial data and checksum */
     DEBUG_MSG("Note: parsing UBX frame> ");
     for (i=0; i<buff_size; i++) {
-        DEBUG_MSG("%02x ", serial_buff[i]);
+        DEBUG_MSG("%02x ", (unsigned char)serial_buff[i]);
     }
     DEBUG_MSG("\n");
 
