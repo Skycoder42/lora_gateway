@@ -31,6 +31,7 @@ Maintainer: Michael Coracin
 #include <signal.h>     /* sigaction */
 #include <stdlib.h>     /* exit */
 #include <unistd.h>     /* read */
+#include <sys/time.h>
 
 #include "loragw_hal.h"
 #include "loragw_gps.h"
@@ -43,6 +44,7 @@ static int exit_sig = 0; /* 1 -> application terminates cleanly (shut down hardw
 static int quit_sig = 0; /* 1 -> application terminates without shutting down the hardware */
 
 struct tref ppm_ref;
+struct timeval ppm_tstamp_offset;
 
 /* -------------------------------------------------------------------------- */
 /* --- PRIVATE FUNCTIONS DECLARATION ---------------------------------------- */
@@ -64,6 +66,7 @@ static void sig_handler(int sigio) {
 
 static void gps_process_sync(void) {
 	/* variables for PPM pulse GPS synchronization */
+	struct timeval ppm_counter;
 	uint32_t ppm_tstamp;
 	struct timespec ppm_gps;
 	struct timespec ppm_utc;
@@ -78,11 +81,10 @@ static void gps_process_sync(void) {
 		printf("    No valid reference GPS time available, synchronization impossible.\n");
 		return;
 	}
-	printf("ppm_utc: %ld %ld\n", ppm_utc.tv_sec, ppm_utc.tv_nsec);
-	printf("ppm_gps: %ld %ld\n", ppm_gps.tv_sec, ppm_gps.tv_nsec);
 
 	/* get timestamp for synchronization */
-	ppm_tstamp = time(NULL);
+	gettimeofday(&ppm_counter, NULL);
+	ppm_tstamp = (ppm_counter.tv_sec - ppm_tstamp_offset.tv_sec) * 1E6 + (ppm_counter.tv_usec - ppm_tstamp_offset.tv_usec);
 	i = LGW_HAL_SUCCESS;//lgw_get_trigcnt(&ppm_tstamp);
 	if (i != LGW_HAL_SUCCESS) {
 		printf("    Failed to read timestamp, synchronization impossible.\n");
@@ -196,6 +198,7 @@ int main(int argc, char *argv[])
 	/* initialize some variables before loop */
 	memset(serial_buff, 0, sizeof serial_buff);
 	memset(&ppm_ref, 0, sizeof ppm_ref);
+	gettimeofday(&ppm_tstamp_offset, NULL);
 
 	/* loop until user action */
 	while ((quit_sig != 1) && (exit_sig != 1)) {
