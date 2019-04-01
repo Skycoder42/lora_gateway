@@ -7,9 +7,9 @@
   (C)2013 Semtech-Cycleo
 
 Description:
-    Library of functions to manage a GNSS module (typically GPS) for accurate
-    timestamping of packets and synchronisation of gateways.
-    A limited set of module brands/models are supported.
+	Library of functions to manage a GNSS module (typically GPS) for accurate
+	timestamping of packets and synchronisation of gateways.
+	A limited set of module brands/models are supported.
 
 License: Revised BSD License, see LICENSE.TXT file include in the project
 Maintainer: Michael Coracin
@@ -30,6 +30,8 @@ Maintainer: Michael Coracin
 
 #include "config.h"     /* library configuration options (dynamically generated) */
 
+extern int gps_sync_resets;
+
 /* -------------------------------------------------------------------------- */
 /* --- PUBLIC TYPES --------------------------------------------------------- */
 
@@ -38,11 +40,11 @@ Maintainer: Michael Coracin
 @brief Time solution required for timestamp to absolute time conversion
 */
 struct tref {
-    time_t          systime;    /*!> system time when solution was calculated */
-    uint32_t        count_us;   /*!> reference concentrator internal timestamp */
-    struct timespec utc;        /*!> reference UTC time (from GPS/NMEA) */
-    struct timespec gps;        /*!> reference GPS time (since 01.Jan.1980) */
-    double          xtal_err;   /*!> raw clock error (eg. <1 'slow' XTAL) */
+	time_t          systime;    /*!> system time when solution was calculated */
+	uint32_t        count_us;   /*!> reference concentrator internal timestamp */
+	struct timespec utc;        /*!> reference UTC time (from GPS/NMEA) */
+	struct timespec gps;        /*!> reference GPS time (since 01.Jan.1980) */
+	double          xtal_err;   /*!> raw clock error (eg. <1 'slow' XTAL) */
 };
 
 /**
@@ -50,9 +52,9 @@ struct tref {
 @brief Geodesic coordinates
 */
 struct coord_s {
-    double  lat;    /*!> latitude [-90,90] (North +, South -) */
-    double  lon;    /*!> longitude [-180,180] (East +, West -)*/
-    short   alt;    /*!> altitude in meters (WGS 84 geoid ref.) */
+	double  lat;    /*!> latitude [-90,90] (North +, South -) */
+	double  lon;    /*!> longitude [-180,180] (East +, West -)*/
+	short   alt;    /*!> altitude in meters (WGS 84 geoid ref.) */
 };
 
 /**
@@ -60,27 +62,27 @@ struct coord_s {
 @brief Type of GPS (and other GNSS) sentences
 */
 enum gps_msg {
-    UNKNOWN,         /*!> neutral value */
-    IGNORED,         /*!> frame was not parsed by the system */
-    INVALID,         /*!> system try to parse frame but failed */
-    INCOMPLETE,      /*!> frame parsed was missing bytes */
-    /* NMEA messages of interest */
-    NMEA_RMC,        /*!> Recommended Minimum data (time + date) */
-    NMEA_GGA,        /*!> Global positioning system fix data (pos + alt) */
-    NMEA_GNS,        /*!> GNSS fix data (pos + alt, sat number) */
-    NMEA_ZDA,        /*!> Time and Date */
-    /* NMEA message useful for time reference quality assessment */
-    NMEA_GBS,        /*!> GNSS Satellite Fault Detection */
-    NMEA_GST,        /*!> GNSS Pseudo Range Error Statistics */
-    NMEA_GSA,        /*!> GNSS DOP and Active Satellites (sat number) */
-    NMEA_GSV,        /*!> GNSS Satellites in View (sat SNR) */
-    /* Misc. NMEA messages */
-    NMEA_GLL,        /*!> Latitude and longitude, with time fix and status */
-    NMEA_TXT,        /*!> Text Transmission */
-    NMEA_VTG,        /*!> Course over ground and Ground speed */
-    /* uBlox proprietary NMEA messages of interest */
-    UBX_NAV_TIMEGPS, /*!> GPS Time Solution */
-    UBX_NAV_TIMEUTC  /*!> UTC Time Solution */
+	UNKNOWN,         /*!> neutral value */
+	IGNORED,         /*!> frame was not parsed by the system */
+	INVALID,         /*!> system try to parse frame but failed */
+	INCOMPLETE,      /*!> frame parsed was missing bytes */
+	/* NMEA messages of interest */
+	NMEA_RMC,        /*!> Recommended Minimum data (time + date) */
+	NMEA_GGA,        /*!> Global positioning system fix data (pos + alt) */
+	NMEA_GNS,        /*!> GNSS fix data (pos + alt, sat number) */
+	NMEA_ZDA,        /*!> Time and Date */
+	/* NMEA message useful for time reference quality assessment */
+	NMEA_GBS,        /*!> GNSS Satellite Fault Detection */
+	NMEA_GST,        /*!> GNSS Pseudo Range Error Statistics */
+	NMEA_GSA,        /*!> GNSS DOP and Active Satellites (sat number) */
+	NMEA_GSV,        /*!> GNSS Satellites in View (sat SNR) */
+	/* Misc. NMEA messages */
+	NMEA_GLL,        /*!> Latitude and longitude, with time fix and status */
+	NMEA_TXT,        /*!> Text Transmission */
+	NMEA_VTG,        /*!> Course over ground and Ground speed */
+	/* uBlox proprietary NMEA messages of interest */
+	UBX_NAV_TIMEGPS, /*!> GPS Time Solution */
+	UBX_NAV_TIMEUTC  /*!> UTC Time Solution */
 };
 
 /* -------------------------------------------------------------------------- */
@@ -165,7 +167,7 @@ int lgw_gps_get(struct timespec *utc, struct timespec *gps_time, struct coord_s 
 @brief Get time and position information from the serial GPS last message received
 @param utc UTC time, with ns precision (leap seconds are ignored)
 @param gps_time timestamp of last time pulse from the GPS module converted to the UNIX epoch
-       (leap seconds are ignored)
+	   (leap seconds are ignored)
 @param loc location information
 @param err location error estimate if supported
 @return success if timestamp was read and time reference could be refreshed

@@ -42,6 +42,8 @@ Maintainer: Michael Coracin
 
 static int exit_sig = 0; /* 1 -> application terminates cleanly (shut down hardware, close open files, etc) */
 static int quit_sig = 0; /* 1 -> application terminates without shutting down the hardware */
+static int total_syncs = -2;
+static int successful_syncs = 0;
 
 struct tref ppm_ref;
 struct timeval ppm_tstamp_offset;
@@ -92,6 +94,7 @@ static void gps_process_sync(void) {
 	}
 
 	/* try to update synchronize time reference with the new GPS & timestamp */
+	++total_syncs;
 	i = lgw_gps_sync(&ppm_ref, ppm_tstamp, ppm_utc, ppm_gps);
 	if (i != LGW_GPS_SUCCESS) {
 		printf("    Synchronization error.\n");
@@ -99,6 +102,7 @@ static void gps_process_sync(void) {
 	}
 
 	/* display result */
+	++successful_syncs;
 	printf("    * Synchronization successful *\n");
 	printf("    UTC reference time: %lld.%09ld\n", (long long)ppm_ref.utc.tv_sec, ppm_ref.utc.tv_nsec);
 	printf("    GPS reference time: %lld.%09ld\n", (long long)ppm_ref.gps.tv_sec, ppm_ref.gps.tv_nsec);
@@ -208,7 +212,7 @@ int main(int argc, char *argv[])
 		/* blocking non-canonical read on serial port */
 		ssize_t nb_char = read(gps_tty_dev, serial_buff + wr_idx, LGW_GPS_MIN_MSG_SIZE);
 		if (nb_char <= 0) {
-			printf("WARNING: [gps] read() returned value %d\n", nb_char);
+			printf("WARNING: [gps] read() returned value %d\n", (int)nb_char);
 			continue;
 		}
 		wr_idx += (size_t)nb_char;
@@ -291,7 +295,8 @@ int main(int argc, char *argv[])
 		lgw_stop();
 	}
 
-	printf("\nEnd of test for loragw_gps.c\n");
+	printf("\nSynchronization statistics: %i / %i / %i\n", gps_sync_resets, successful_syncs, total_syncs);
+	printf("End of test for loragw_gps.c\n");
 	exit(EXIT_SUCCESS);
 }
 
