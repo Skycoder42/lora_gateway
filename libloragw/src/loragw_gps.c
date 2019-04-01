@@ -585,7 +585,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
 		k = sscanf(parser_buf + str_index[9], "%hd", &gps_alt);
 		if ((i == 2) && (j == 2) && (k == 1) && ((gps_ola=='N')||(gps_ola=='S')) && ((gps_olo=='E')||(gps_olo=='W'))) {
 			gps_pos_ok = true;
-			DEBUG_MSG("Note: Valid GGA sentence, %d sat, lat %02ddeg %06.3fmin %c, lon %03ddeg%06.3fmin %c, alt %d\n", gps_sat, gps_dla, gps_mla, gps_ola, gps_dlo, gps_mlo, gps_olo, gps_alt);
+			DEBUG_MSG("Note: Valid GGA sentence, %d sat, lat %02ddeg %06.3fmin %c, lon %03ddeg%06.3f min %c, alt %d\n", gps_sat, gps_dla, gps_mla, gps_ola, gps_dlo, gps_mlo, gps_olo, gps_alt);
 		} else {
 			/* could not get a valid latitude, longitude AND altitude */
 			gps_pos_ok = false;
