@@ -258,9 +258,9 @@ int lgw_gps_enable(char *tty_path, char *gps_family, speed_t target_brate, int *
     uint8_t ubx_cmd_timegps[UBX_MSG_NAVTIMEGPS_LEN] = {
                     0xB5, 0x62, /* UBX Sync Chars */
                     0x06, 0x01, /* CFG-MSG Class/ID */
-                    0x08, 0x00, /* Payload length */
-                    0x01, 0x20, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, /* Enable NAV-TIMEGPS output on serial */
-                    0x32, 0x94 }; /* Checksum */
+                    0x03, 0x00, /* Payload length */
+                    0x01, 0x20, 0x01, /* Enable NAV-TIMEGPS output on serial */
+                    0x2c, 0x83 }; /* Checksum */
     ssize_t num_written;
 
     /* check input parameters */
@@ -411,7 +411,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
     /* display received serial data and checksum */
     DEBUG_MSG("Note: parsing UBX frame> ");
     for (i=0; i<buff_size; i++) {
-        DEBUG_MSG("%02x ", serial_buff[i]);
+        DEBUG_MSG("%02x ", (unsigned char)serial_buff[i]);
     }
     DEBUG_MSG("\n");
 
@@ -583,7 +583,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
         k = sscanf(parser_buf + str_index[9], "%hd", &gps_alt);
         if ((i == 2) && (j == 2) && (k == 1) && ((gps_ola=='N')||(gps_ola=='S')) && ((gps_olo=='E')||(gps_olo=='W'))) {
             gps_pos_ok = true;
-            DEBUG_MSG("Note: Valid GGA sentence, %d sat, lat %02ddeg %06.3fmin %c, lon %03ddeg%06.3fmin %c, alt %d\n", gps_sat, gps_dla, gps_mla, gps_ola, gps_dlo, gps_mlo, gps_olo, gps_alt);
+            DEBUG_MSG("Note: Valid GGA sentence, %d sat, lat %02ddeg %06.3fmin %c, lon %03ddeg%06.3f min %c, alt %d\n", gps_sat, gps_dla, gps_mla, gps_ola, gps_dlo, gps_mlo, gps_olo, gps_alt);
         } else {
             /* could not get a valid latitude, longitude AND altitude */
             gps_pos_ok = false;

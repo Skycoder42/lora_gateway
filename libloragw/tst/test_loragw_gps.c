@@ -31,6 +31,7 @@ Maintainer: Michael Coracin
 #include <signal.h>     /* sigaction */
 #include <stdlib.h>     /* exit */
 #include <unistd.h>     /* read */
+#include <sys/time.h>
 
 #include "loragw_hal.h"
 #include "loragw_gps.h"
@@ -43,6 +44,7 @@ static int exit_sig = 0; /* 1 -> application terminates cleanly (shut down hardw
 static int quit_sig = 0; /* 1 -> application terminates without shutting down the hardware */
 
 struct tref ppm_ref;
+struct timeval ppm_tstamp_offset;
 
 /* -------------------------------------------------------------------------- */
 /* --- PRIVATE FUNCTIONS DECLARATION ---------------------------------------- */
@@ -64,6 +66,7 @@ static void sig_handler(int sigio) {
 
 static void gps_process_sync(void) {
     /* variables for PPM pulse GPS synchronization */
+    struct timeval ppm_counter;
     uint32_t ppm_tstamp;
     struct timespec ppm_gps;
     struct timespec ppm_utc;
@@ -80,7 +83,9 @@ static void gps_process_sync(void) {
     }
 
     /* get timestamp for synchronization */
-    i = lgw_get_trigcnt(&ppm_tstamp);
+    gettimeofday(&ppm_counter, NULL);
+    ppm_tstamp = (ppm_counter.tv_sec - ppm_tstamp_offset.tv_sec) * 1E6 + (ppm_counter.tv_usec - ppm_tstamp_offset.tv_usec);
+    i = LGW_HAL_SUCCESS;//lgw_get_trigcnt(&ppm_tstamp);
     if (i != LGW_HAL_SUCCESS) {
         printf("    Failed to read timestamp, synchronization impossible.\n");
         return;
@@ -133,6 +138,7 @@ static void gps_process_coords(void) {
 
 int main()
 {
+    setbuf(stdout, NULL);
     struct sigaction sigact; /* SIGQUIT&SIGINT&SIGTERM signal handling */
 
     int i;
@@ -142,7 +148,7 @@ int main()
     struct lgw_conf_rxrf_s rfconf;
 
     /* serial variables */
-    char serial_buff[128]; /* buffer to receive GPS data */
+    char serial_buff[512]; /* buffer to receive GPS data */
     size_t wr_idx = 0;     /* pointer to end of chars in buffer */
     int gps_tty_dev; /* file descriptor to the serial port of the GNSS module */
 
@@ -162,7 +168,7 @@ int main()
     printf("*** Library version information ***\n%s\n***\n", lgw_version_info());
 
     /* Open and configure GPS */
-    i = lgw_gps_enable("/dev/ttyAMA0", "ubx7", 0, &gps_tty_dev);
+    i = lgw_gps_enable("/dev/ttyACM0", "ubx7", 0, &gps_tty_dev);
     if (i != LGW_GPS_SUCCESS) {
         printf("ERROR: IMPOSSIBLE TO ENABLE GPS\n");
         exit(EXIT_FAILURE);
@@ -189,6 +195,7 @@ int main()
     /* initialize some variables before loop */
     memset(serial_buff, 0, sizeof serial_buff);
     memset(&ppm_ref, 0, sizeof ppm_ref);
+    gettimeofday(&ppm_tstamp_offset, NULL);
 
     /* loop until user action */
     while ((quit_sig != 1) && (exit_sig != 1)) {
@@ -198,7 +205,7 @@ int main()
         /* blocking non-canonical read on serial port */
         ssize_t nb_char = read(gps_tty_dev, serial_buff + wr_idx, LGW_GPS_MIN_MSG_SIZE);
         if (nb_char <= 0) {
-            printf("WARNING: [gps] read() returned value %d\n", nb_char);
+            printf("WARNING: [gps] read() returned value %d\n", (int)nb_char);
             continue;
         }
         wr_idx += (size_t)nb_char;
@@ -211,7 +218,7 @@ int main()
             size_t frame_size = 0;
 
             /* Scan buffer for UBX sync char */
-            if (serial_buff[rd_idx] == LGW_GPS_UBX_SYNC_CHAR) {
+            if ((unsigned char)serial_buff[rd_idx] == LGW_GPS_UBX_SYNC_CHAR) {
 
                 /***********************
                  * Found UBX sync char *
