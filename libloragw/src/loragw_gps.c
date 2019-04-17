@@ -47,6 +47,11 @@ Maintainer: Michael Coracin
     #define DEBUG_ARRAY(a,b,c)  for(a=0;a!=0;){}
     #define CHECK_NULL(a)       if(a==NULL){return LGW_GPS_ERROR;}
 #endif
+#if DEBUG_VBS == 1
+    #define DEBUG_VBS(args...)  fprintf(stderr, args)
+#else
+    #define DEBUG_VBS(args...)
+#endif
 #define TRACE()         fprintf(stderr, "@ %s %d\n", __FUNCTION__, __LINE__);
 
 /* -------------------------------------------------------------------------- */
@@ -404,16 +409,16 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
         return IGNORED;
     }
     if (buff_size < 8) {
-        DEBUG_MSG("ERROR: TOO SHORT TO BE A VALID UBX MESSAGE\n");
+        DEBUG_VBS("ERROR: TOO SHORT TO BE A VALID UBX MESSAGE\n");
         return IGNORED;
     }
 
     /* display received serial data and checksum */
-    DEBUG_MSG("Note: parsing UBX frame> ");
+    DEBUG_VBS("Note: parsing UBX frame> ");
     for (i=0; i<buff_size; i++) {
-        DEBUG_MSG("%02x ", (unsigned char)serial_buff[i]);
+        DEBUG_VBS("%02x ", (unsigned char)serial_buff[i]);
     }
-    DEBUG_MSG("\n");
+    DEBUG_VBS("\n");
 
     /* Check for UBX sync chars 0xB5 0x62 */
     if ((serial_buff[0] == (char)0xB5) && (serial_buff[1] == (char)0x62)) {
@@ -442,6 +447,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                     /* Check validity of information */
                     valid = serial_buff[17] & 0x3; /* towValid, weekValid */
                     if (valid) {
+                        DEBUG_MSG("NOTE: UBX NAV-TIMEGPS received (valid)\n");
                         /* Parse buffer to extract GPS time */
                         /* Warning: payload byte ordering is Little Endian */
                         gps_iTOW =  (uint8_t)serial_buff[6];
@@ -473,6 +479,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                         }
 #endif
                     } else { /* valid */
+                        DEBUG_MSG("NOTE: UBX NAV-TIMEGPS received (invalid)\n");
                         gps_time_ok = false;
                     }
 
@@ -484,7 +491,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                     DEBUG_MSG("NOTE: UBX ACK-ACK received\n");
                     return IGNORED;
                 } else { /* not a supported message */
-                    DEBUG_MSG("ERROR: UBX message is not supported (%02x %02x)\n", serial_buff[2], serial_buff[3]);
+                    DEBUG_VBS("ERROR: UBX message is not supported (%02x %02x)\n", serial_buff[2], serial_buff[3]);
                     return IGNORED;
                 }
             } else { /* checksum failed */
@@ -492,7 +499,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                 return INVALID;
             }
         } else { /* message contains less bytes than indicated by header */
-            DEBUG_MSG("ERROR: UBX message incomplete\n");
+            DEBUG_VBS("ERROR: UBX message incomplete\n");
             return INCOMPLETE;
         }
     } else { /* Not a UBX message */
@@ -521,7 +528,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
 
     /* look for some NMEA sentences in particular */
     if (buff_size < 8) {
-        DEBUG_MSG("ERROR: TOO SHORT TO BE A VALID NMEA SENTENCE\n");
+        DEBUG_VBS("ERROR: TOO SHORT TO BE A VALID NMEA SENTENCE\n");
         return UNKNOWN;
     } else if (!validate_nmea_checksum(serial_buff, buff_size)) {
         DEBUG_MSG("Warning: invalid NMEA sentence (bad checksum)\n");
@@ -591,7 +598,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
         }
         return NMEA_GGA;
     } else {
-        DEBUG_MSG("Note: ignored NMEA sentence\n"); /* quite verbose */
+        DEBUG_VBS("Note: ignored NMEA sentence\n"); /* quite verbose */
         return IGNORED;
     }
 }
