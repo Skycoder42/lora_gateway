@@ -138,7 +138,7 @@ static int nmea_checksum(const char *nmea_string, int buff_size, char *checksum)
         check_num ^= nmea_string[i];
         i += 1;
         if (i >= buff_size) {
-            DEBUG_MSG("Maximum length reached for nmea_checksum\n");
+            DEBUG_VBS("Maximum length reached for nmea_checksum\n");
             return -1;
         }
     }
@@ -177,13 +177,13 @@ static bool validate_nmea_checksum(const char *serial_buff, int buff_size) {
 
     /* could we calculate a verification checksum ? */
     if (checksum_index < 0) {
-        DEBUG_MSG("ERROR: IMPOSSIBLE TO PARSE NMEA SENTENCE\n");
+        DEBUG_VBS("ERROR: IMPOSSIBLE TO PARSE NMEA SENTENCE\n");
         return false;
     }
 
     /* check if there are enough char in the serial buffer to read checksum */
     if (checksum_index >= (buff_size - 2)) {
-        DEBUG_MSG("ERROR: IMPOSSIBLE TO READ NMEA SENTENCE CHECKSUM\n");
+        DEBUG_VBS("ERROR: IMPOSSIBLE TO READ NMEA SENTENCE CHECKSUM\n");
         return false;
     }
 
@@ -191,7 +191,7 @@ static bool validate_nmea_checksum(const char *serial_buff, int buff_size) {
     if ((serial_buff[checksum_index] == checksum[0]) && (serial_buff[checksum_index+1] == checksum[1])) {
         return true;
     } else {
-        DEBUG_MSG("ERROR: NMEA CHECKSUM %c%c DOESN'T MATCH VERIFICATION CHECKSUM %c%c\n", serial_buff[checksum_index], serial_buff[checksum_index+1], checksum[0], checksum[1]);
+        DEBUG_VBS("ERROR: NMEA CHECKSUM %c%c DOESN'T MATCH VERIFICATION CHECKSUM %c%c\n", serial_buff[checksum_index], serial_buff[checksum_index+1], checksum[0], checksum[1]);
         return false;
     }
 }
@@ -531,7 +531,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
         DEBUG_VBS("ERROR: TOO SHORT TO BE A VALID NMEA SENTENCE\n");
         return UNKNOWN;
     } else if (!validate_nmea_checksum(serial_buff, buff_size)) {
-        DEBUG_MSG("Warning: invalid NMEA sentence (bad checksum)\n");
+        DEBUG_VBS("Warning: invalid NMEA sentence (bad checksum)\n");
         return INVALID;
     } else if (match_label(serial_buff, "$G?RMC", 6, '?')) {
         /*
