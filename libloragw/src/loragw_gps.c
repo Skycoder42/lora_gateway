@@ -48,9 +48,9 @@ Maintainer: Michael Coracin
     #define CHECK_NULL(a)       if(a==NULL){return LGW_GPS_ERROR;}
 #endif
 #if DEBUG_VBS == 1
-    #define DEBUG_VBS(args...)  fprintf(stderr, args)
+    #define DEBUG_VBS_MSG(args...)  fprintf(stderr, args)
 #else
-    #define DEBUG_VBS(args...)
+    #define DEBUG_VBS_MSG(args...)
 #endif
 #define TRACE()         fprintf(stderr, "@ %s %d\n", __FUNCTION__, __LINE__);
 
@@ -138,7 +138,7 @@ static int nmea_checksum(const char *nmea_string, int buff_size, char *checksum)
         check_num ^= nmea_string[i];
         i += 1;
         if (i >= buff_size) {
-            DEBUG_VBS("Maximum length reached for nmea_checksum\n");
+            DEBUG_VBS_MSG("Maximum length reached for nmea_checksum\n");
             return -1;
         }
     }
@@ -177,13 +177,13 @@ static bool validate_nmea_checksum(const char *serial_buff, int buff_size) {
 
     /* could we calculate a verification checksum ? */
     if (checksum_index < 0) {
-        DEBUG_VBS("ERROR: IMPOSSIBLE TO PARSE NMEA SENTENCE\n");
+        DEBUG_VBS_MSG("ERROR: IMPOSSIBLE TO PARSE NMEA SENTENCE\n");
         return false;
     }
 
     /* check if there are enough char in the serial buffer to read checksum */
     if (checksum_index >= (buff_size - 2)) {
-        DEBUG_VBS("ERROR: IMPOSSIBLE TO READ NMEA SENTENCE CHECKSUM\n");
+        DEBUG_VBS_MSG("ERROR: IMPOSSIBLE TO READ NMEA SENTENCE CHECKSUM\n");
         return false;
     }
 
@@ -191,7 +191,7 @@ static bool validate_nmea_checksum(const char *serial_buff, int buff_size) {
     if ((serial_buff[checksum_index] == checksum[0]) && (serial_buff[checksum_index+1] == checksum[1])) {
         return true;
     } else {
-        DEBUG_VBS("ERROR: NMEA CHECKSUM %c%c DOESN'T MATCH VERIFICATION CHECKSUM %c%c\n", serial_buff[checksum_index], serial_buff[checksum_index+1], checksum[0], checksum[1]);
+        DEBUG_VBS_MSG("ERROR: NMEA CHECKSUM %c%c DOESN'T MATCH VERIFICATION CHECKSUM %c%c\n", serial_buff[checksum_index], serial_buff[checksum_index+1], checksum[0], checksum[1]);
         return false;
     }
 }
@@ -409,16 +409,16 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
         return IGNORED;
     }
     if (buff_size < 8) {
-        DEBUG_VBS("ERROR: TOO SHORT TO BE A VALID UBX MESSAGE\n");
+        DEBUG_VBS_MSG("ERROR: TOO SHORT TO BE A VALID UBX MESSAGE\n");
         return IGNORED;
     }
 
     /* display received serial data and checksum */
-    DEBUG_VBS("Note: parsing UBX frame> ");
+    DEBUG_VBS_MSG("Note: parsing UBX frame> ");
     for (i=0; i<buff_size; i++) {
-        DEBUG_VBS("%02x ", (unsigned char)serial_buff[i]);
+        DEBUG_VBS_MSG("%02x ", (unsigned char)serial_buff[i]);
     }
-    DEBUG_VBS("\n");
+    DEBUG_VBS_MSG("\n");
 
     /* Check for UBX sync chars 0xB5 0x62 */
     if ((serial_buff[0] == (char)0xB5) && (serial_buff[1] == (char)0x62)) {
@@ -447,7 +447,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                     /* Check validity of information */
                     valid = serial_buff[17] & 0x3; /* towValid, weekValid */
                     if (valid) {
-                        DEBUG_VBS("NOTE: UBX NAV-TIMEGPS received (valid)\n");
+                        DEBUG_VBS_MSG("NOTE: UBX NAV-TIMEGPS received (valid)\n");
                         /* Parse buffer to extract GPS time */
                         /* Warning: payload byte ordering is Little Endian */
                         gps_iTOW =  (uint8_t)serial_buff[6];
@@ -479,7 +479,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                         }
 #endif
                     } else { /* valid */
-                        DEBUG_VBS("NOTE: UBX NAV-TIMEGPS received (invalid)\n");
+                        DEBUG_VBS_MSG("NOTE: UBX NAV-TIMEGPS received (invalid)\n");
                         gps_time_ok = false;
                     }
 
@@ -491,7 +491,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                     DEBUG_MSG("NOTE: UBX ACK-ACK received\n");
                     return IGNORED;
                 } else { /* not a supported message */
-                    DEBUG_VBS("ERROR: UBX message is not supported (%02x %02x)\n", serial_buff[2], serial_buff[3]);
+                    DEBUG_VBS_MSG("ERROR: UBX message is not supported (%02x %02x)\n", serial_buff[2], serial_buff[3]);
                     return IGNORED;
                 }
             } else { /* checksum failed */
@@ -499,7 +499,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                 return INVALID;
             }
         } else { /* message contains less bytes than indicated by header */
-            DEBUG_VBS("ERROR: UBX message incomplete\n");
+            DEBUG_VBS_MSG("ERROR: UBX message incomplete\n");
             return INCOMPLETE;
         }
     } else { /* Not a UBX message */
@@ -528,10 +528,10 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
 
     /* look for some NMEA sentences in particular */
     if (buff_size < 8) {
-        DEBUG_VBS("ERROR: TOO SHORT TO BE A VALID NMEA SENTENCE\n");
+        DEBUG_VBS_MSG("ERROR: TOO SHORT TO BE A VALID NMEA SENTENCE\n");
         return UNKNOWN;
     } else if (!validate_nmea_checksum(serial_buff, buff_size)) {
-        DEBUG_VBS("Warning: invalid NMEA sentence (bad checksum)\n");
+        DEBUG_VBS_MSG("Warning: invalid NMEA sentence (bad checksum)\n");
         return INVALID;
     } else if (match_label(serial_buff, "$G?RMC", 6, '?')) {
         /*
@@ -598,7 +598,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
         }
         return NMEA_GGA;
     } else {
-        DEBUG_VBS("Note: ignored NMEA sentence\n"); /* quite verbose */
+        DEBUG_VBS_MSG("Note: ignored NMEA sentence\n"); /* quite verbose */
         return IGNORED;
     }
 }
@@ -685,7 +685,10 @@ int lgw_gps_sync(struct tref *ref, uint32_t count_us, struct timespec utc, struc
     cnt_diff = (double)(count_us - ref->count_us) / (double)(TS_CPS); /* uncorrected by xtal_err */
     utc_diff = (double)(utc.tv_sec - (ref->utc).tv_sec) + (1E-9 * (double)(utc.tv_nsec - (ref->utc).tv_nsec));
     gps_diff = (double)(gps_time.tv_sec - (ref->gps).tv_sec) + (1E-9 * (double)(gps_time.tv_nsec - (ref->gps).tv_nsec));
-    DEBUG_MSG("INFO: cnt_diff: %f\n", cnt_diff);
+    DEBUG_MSG("INFO: count_us: %ud ts\n", count_us);
+    DEBUG_MSG("INFO: ref->count_u: %ud ts\n", ref->count_us);
+    DEBUG_MSG("INFO: cnt_diff: %ud ts\n", count_us - ref->count_us);
+    DEBUG_MSG("INFO: cnt_diff: %f s\n", cnt_diff);
     DEBUG_MSG("INFO: utc_diff: %f\n", utc_diff);
     DEBUG_MSG("INFO: gps_diff: %f\n", gps_diff);
     DEBUG_MSG("INFO: slope: %f\n", cnt_diff/utc_diff);
