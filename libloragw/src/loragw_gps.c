@@ -447,7 +447,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                     /* Check validity of information */
                     valid = serial_buff[17] & 0x3; /* towValid, weekValid */
                     if (valid) {
-                        DEBUG_MSG("NOTE: UBX NAV-TIMEGPS received (valid)\n");
+                        DEBUG_VBS("NOTE: UBX NAV-TIMEGPS received (valid)\n");
                         /* Parse buffer to extract GPS time */
                         /* Warning: payload byte ordering is Little Endian */
                         gps_iTOW =  (uint8_t)serial_buff[6];
@@ -479,7 +479,7 @@ enum gps_msg lgw_parse_ubx(const char *serial_buff, size_t buff_size, size_t *ms
                         }
 #endif
                     } else { /* valid */
-                        DEBUG_MSG("NOTE: UBX NAV-TIMEGPS received (invalid)\n");
+                        DEBUG_VBS("NOTE: UBX NAV-TIMEGPS received (invalid)\n");
                         gps_time_ok = false;
                     }
 
