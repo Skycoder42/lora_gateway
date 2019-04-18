@@ -671,7 +671,6 @@ int lgw_gps_get(struct timespec *utc, struct timespec *gps_time, struct coord_s 
 int lgw_gps_sync(struct tref *ref, uint32_t count_us, struct timespec utc, struct timespec gps_time) {
     double cnt_diff; /* internal concentrator time difference (in seconds) */
     double utc_diff; /* UTC time difference (in seconds) */
-    double gps_diff; /* GPS time difference (in seconds) */
     double slope; /* time slope between new reference and old reference (for sanity check) */
 
     bool aber_n0; /* is the update value for synchronization aberrant or not ? */
@@ -684,14 +683,6 @@ int lgw_gps_sync(struct tref *ref, uint32_t count_us, struct timespec utc, struc
 
     cnt_diff = (double)(count_us - ref->count_us) / (double)(TS_CPS); /* uncorrected by xtal_err */
     utc_diff = (double)(utc.tv_sec - (ref->utc).tv_sec) + (1E-9 * (double)(utc.tv_nsec - (ref->utc).tv_nsec));
-    gps_diff = (double)(gps_time.tv_sec - (ref->gps).tv_sec) + (1E-9 * (double)(gps_time.tv_nsec - (ref->gps).tv_nsec));
-    DEBUG_MSG("INFO: count_us: %ud ts\n", count_us);
-    DEBUG_MSG("INFO: ref->count_u: %ud ts\n", ref->count_us);
-    DEBUG_MSG("INFO: cnt_diff: %ud ts\n", count_us - ref->count_us);
-    DEBUG_MSG("INFO: cnt_diff: %f s\n", cnt_diff);
-    DEBUG_MSG("INFO: utc_diff: %f\n", utc_diff);
-    DEBUG_MSG("INFO: gps_diff: %f\n", gps_diff);
-    DEBUG_MSG("INFO: slope: %f\n", cnt_diff/utc_diff);
 
     /* detect aberrant points by measuring if slope limits are exceeded */
     if (utc_diff != 0) { // prevent divide by zero
